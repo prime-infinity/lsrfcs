@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Windows.Media;
 
 namespace LaserFocus.Core.Models
 {
@@ -11,7 +10,7 @@ namespace LaserFocus.Core.Models
         private string _processName = string.Empty;
         private int _id;
         private string _status = string.Empty;
-        private Brush _statusColor = Brushes.Black;
+        private string _statusColor = "Black";
         private DateTime _lastSeen;
 
         /// <summary>
@@ -62,18 +61,18 @@ namespace LaserFocus.Core.Models
                     // Update status color based on status
                     StatusColor = value.ToLower() switch
                     {
-                        "allowed" => Brushes.Green,
-                        "blocked" => Brushes.Red,
-                        _ => Brushes.Black
+                        "allowed" => "Green",
+                        "blocked" => "Red",
+                        _ => "Black"
                     };
                 }
             }
         }
 
         /// <summary>
-        /// Color to display the status (Green for allowed, Red for blocked)
+        /// Color name to display the status (Green for allowed, Red for blocked)
         /// </summary>
-        public Brush StatusColor
+        public string StatusColor
         {
             get => _statusColor;
             set

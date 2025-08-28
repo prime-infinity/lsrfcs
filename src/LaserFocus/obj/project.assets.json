@@ -1,0 +1,98 @@
+{
+  "version": 3,
+  "targets": {
+    "net9.0-windows7.0": {
+      "LaserFocus.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/LaserFocus.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/LaserFocus.Core.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "LaserFocus.Core/1.0.0": {
+      "type": "project",
+      "path": "../LaserFocus.Core/LaserFocus.Core.csproj",
+      "msbuildProject": "../LaserFocus.Core/LaserFocus.Core.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net9.0-windows7.0": [
+      "LaserFocus.Core >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\HP\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\HP\\Documents\\lsrfcs\\src\\LaserFocus\\LaserFocus.csproj",
+      "projectName": "LaserFocus",
+      "projectPath": "C:\\Users\\HP\\Documents\\lsrfcs\\src\\LaserFocus\\LaserFocus.csproj",
+      "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\HP\\Documents\\lsrfcs\\src\\LaserFocus\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net9.0-windows"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net9.0-windows7.0": {
+          "targetAlias": "net9.0-windows",
+          "projectReferences": {
+            "C:\\Users\\HP\\Documents\\lsrfcs\\src\\LaserFocus.Core\\LaserFocus.Core.csproj": {
+              "projectPath": "C:\\Users\\HP\\Documents\\lsrfcs\\src\\LaserFocus.Core\\LaserFocus.Core.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.300"
+    },
+    "frameworks": {
+      "net9.0-windows7.0": {
+        "targetAlias": "net9.0-windows",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WPF": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

@@ -1,6 +1,5 @@
 using LaserFocus.Core.Models;
 using System.ComponentModel;
-using System.Windows.Media;
 using Xunit;
 
 namespace LaserFocus.Tests.Models
@@ -38,7 +37,7 @@ namespace LaserFocus.Tests.Models
 
             // Assert
             Assert.Equal("Allowed", processInfo.Status);
-            Assert.Equal(Brushes.Green, processInfo.StatusColor);
+            Assert.Equal("Green", processInfo.StatusColor);
         }
 
         [Fact]
@@ -52,7 +51,7 @@ namespace LaserFocus.Tests.Models
 
             // Assert
             Assert.Equal("Blocked", processInfo.Status);
-            Assert.Equal(Brushes.Red, processInfo.StatusColor);
+            Assert.Equal("Red", processInfo.StatusColor);
         }
 
         [Fact]
