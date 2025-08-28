@@ -24,7 +24,7 @@
   - Add error handling for file system operations
   - _Requirements: 1.1, 1.2, 1.4, 1.5, 7.2_
 
-- [ ] 4. Develop process monitoring system
+- [x] 4. Develop process monitoring system
 
   - Create ProcessMonitor class for application control
   - Implement process enumeration and filtering logic
