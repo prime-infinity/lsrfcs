@@ -1,10 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using LaserFocus.Core.Models;
+using LaserFocus.Core.Services;
 
 namespace LaserFocus
 {
@@ -14,6 +16,8 @@ namespace LaserFocus
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly DispatcherTimer _processTimer;
+        private readonly HostsFileManager _hostsFileManager;
+        private readonly ConfigurationManager _configurationManager;
         private bool _isMonitoring = false;
         
         // ObservableCollections for data binding
@@ -26,6 +30,10 @@ namespace LaserFocus
         public MainWindow()
         {
             InitializeComponent();
+            
+            // Initialize services
+            _hostsFileManager = new HostsFileManager();
+            _configurationManager = new ConfigurationManager();
             
             // Initialize collections
             _blockedWebsites = new ObservableCollection<string>();
@@ -41,9 +49,8 @@ namespace LaserFocus
             // Set data context for binding
             DataContext = this;
             
-            // Update UI state
-            UpdateUIState();
-            UpdateStatus("Application started. Ready to begin monitoring.");
+            // Load configuration and initialize
+            InitializeApplication();
         }
 
         #region Properties for Data Binding
@@ -105,22 +112,40 @@ namespace LaserFocus
                 return;
             }
             
-            // Basic URL validation and formatting
-            website = FormatWebsiteUrl(website);
-            
-            if (BlockedWebsites.Contains(website))
+            try
             {
-                UpdateStatus($"Website '{website}' is already in the blocked list.");
-                return;
+                // Check if website is already blocked
+                if (BlockedWebsites.Contains(website, StringComparer.OrdinalIgnoreCase))
+                {
+                    UpdateStatus($"Website '{website}' is already in the blocked list.");
+                    return;
+                }
+                
+                // Block the website using HostsFileManager
+                _hostsFileManager.BlockWebsite(website);
+                
+                // Add to UI collection
+                BlockedWebsites.Add(website);
+                
+                // Save to configuration
+                SaveBlockedWebsitesToConfig();
+                
+                // Clear input and show success message
+                WebsiteUrlTextBox.Clear();
+                UpdateStatus($"Successfully blocked '{website}'. Website access has been restricted.");
             }
-            
-            // Add to blocked list
-            BlockedWebsites.Add(website);
-            WebsiteUrlTextBox.Clear();
-            
-            UpdateStatus($"Added '{website}' to blocked websites list.");
-            
-            // TODO: Integrate with HostsFileManager in future tasks
+            catch (UnauthorizedAccessException)
+            {
+                UpdateStatus("Administrator privileges required to block websites. Please run as administrator.");
+            }
+            catch (ArgumentException ex)
+            {
+                UpdateStatus($"Invalid website URL: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Failed to block website: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -130,10 +155,27 @@ namespace LaserFocus
         {
             if (sender is Button button && button.Tag is string website)
             {
-                BlockedWebsites.Remove(website);
-                UpdateStatus($"Removed '{website}' from blocked websites list.");
-                
-                // TODO: Integrate with HostsFileManager in future tasks
+                try
+                {
+                    // Unblock the website using HostsFileManager
+                    _hostsFileManager.UnblockWebsite(website);
+                    
+                    // Remove from UI collection
+                    BlockedWebsites.Remove(website);
+                    
+                    // Save to configuration
+                    SaveBlockedWebsitesToConfig();
+                    
+                    UpdateStatus($"Successfully unblocked '{website}'. Website access has been restored.");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    UpdateStatus("Administrator privileges required to unblock websites. Please run as administrator.");
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatus($"Failed to unblock website: {ex.Message}");
+                }
             }
         }
 
@@ -183,6 +225,89 @@ namespace LaserFocus
         #region Helper Methods
 
         /// <summary>
+        /// Initializes the application by loading configuration and checking privileges
+        /// </summary>
+        private void InitializeApplication()
+        {
+            try
+            {
+                // Check administrator privileges
+                CheckAdministratorPrivileges();
+                
+                // Initialize default configuration if needed
+                _configurationManager.InitializeDefaultConfiguration();
+                
+                // Load blocked websites from configuration
+                LoadBlockedWebsitesFromConfig();
+                
+                // Update UI state
+                UpdateUIState();
+                UpdateStatus("Application started. Ready to begin monitoring.");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Initialization error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Checks if the application has administrator privileges
+        /// </summary>
+        private void CheckAdministratorPrivileges()
+        {
+            if (!_hostsFileManager.HasAdministratorPrivileges())
+            {
+                UpdateStatus("Warning: Administrator privileges not detected. Website blocking may not work properly.");
+            }
+            else
+            {
+                UpdateStatus("Administrator privileges confirmed. All features available.");
+            }
+        }
+
+        /// <summary>
+        /// Loads blocked websites from configuration and syncs with hosts file
+        /// </summary>
+        private void LoadBlockedWebsitesFromConfig()
+        {
+            try
+            {
+                var configWebsites = _configurationManager.LoadBlockedWebsites();
+                
+                // Clear current collection
+                BlockedWebsites.Clear();
+                
+                // Add websites from configuration
+                foreach (var website in configWebsites)
+                {
+                    BlockedWebsites.Add(website);
+                }
+                
+                UpdateStatus($"Loaded {BlockedWebsites.Count} blocked websites from configuration.");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Failed to load blocked websites: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Saves current blocked websites to configuration
+        /// </summary>
+        private void SaveBlockedWebsitesToConfig()
+        {
+            try
+            {
+                var websitesList = BlockedWebsites.ToList();
+                _configurationManager.SaveBlockedWebsites(websitesList);
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Failed to save configuration: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Updates the UI state based on monitoring status
         /// </summary>
         private void UpdateUIState()
@@ -199,26 +324,7 @@ namespace LaserFocus
             StatusTextBlock.Text = $"{DateTime.Now:HH:mm:ss} - {message}";
         }
 
-        /// <summary>
-        /// Formats a website URL for consistent storage
-        /// </summary>
-        private string FormatWebsiteUrl(string website)
-        {
-            // Remove protocol if present
-            if (website.StartsWith("http://") || website.StartsWith("https://"))
-            {
-                var uri = new Uri(website);
-                website = uri.Host;
-            }
-            
-            // Remove www. prefix if present
-            if (website.StartsWith("www."))
-            {
-                website = website.Substring(4);
-            }
-            
-            return website.ToLower();
-        }
+
 
         /// <summary>
         /// Updates the process list display (placeholder implementation)

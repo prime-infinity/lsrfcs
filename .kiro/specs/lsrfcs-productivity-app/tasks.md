@@ -42,7 +42,7 @@
   - Implement real-time process list display
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 5.1, 5.2, 5.3, 5.4, 6.1, 6.2_
 
-- [ ] 6. Integrate website blocking functionality
+- [x] 6. Integrate website blocking functionality
 
   - Connect UI website management to HostsFileManager
   - Implement add website button click handler with validation
