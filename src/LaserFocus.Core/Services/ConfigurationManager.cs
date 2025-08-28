@@ -41,19 +41,46 @@ namespace LaserFocus.Core.Services
         {
             try
             {
+                LoggingService.Instance.LogInfo($"Loading blocked websites from: {_blockedWebsitesPath}", "ConfigurationManager.LoadBlockedWebsites");
+                
                 if (!File.Exists(_blockedWebsitesPath))
                 {
-                    return CreateDefaultBlockedWebsites();
+                    LoggingService.Instance.LogInfo("Blocked websites file not found, creating default configuration", "ConfigurationManager.LoadBlockedWebsites");
+                    var defaultWebsites = CreateDefaultBlockedWebsites();
+                    SaveBlockedWebsites(defaultWebsites); // Save default configuration
+                    return defaultWebsites;
                 }
 
                 var json = File.ReadAllText(_blockedWebsitesPath);
+                
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    LoggingService.Instance.LogWarning("Blocked websites file is empty, using default configuration", "ConfigurationManager.LoadBlockedWebsites");
+                    return CreateDefaultBlockedWebsites();
+                }
+
                 var websites = JsonSerializer.Deserialize<List<string>>(json, JsonOptions);
-                return websites ?? new List<string>();
+                var result = websites ?? new List<string>();
+                
+                LoggingService.Instance.LogInfo($"Successfully loaded {result.Count} blocked websites", "ConfigurationManager.LoadBlockedWebsites");
+                return result;
+            }
+            catch (JsonException ex)
+            {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.LoadBlockedWebsites", "JSON deserialization error");
+                LoggingService.Instance.LogWarning("Using default blocked websites due to JSON error", "ConfigurationManager.LoadBlockedWebsites");
+                return CreateDefaultBlockedWebsites();
+            }
+            catch (IOException ex)
+            {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.LoadBlockedWebsites", "File I/O error");
+                LoggingService.Instance.LogWarning("Using default blocked websites due to file error", "ConfigurationManager.LoadBlockedWebsites");
+                return CreateDefaultBlockedWebsites();
             }
             catch (Exception ex)
             {
-                // Log error and return default configuration
-                Console.WriteLine($"Error loading blocked websites: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.LoadBlockedWebsites", "Unexpected error loading blocked websites");
+                LoggingService.Instance.LogWarning("Using default blocked websites due to unexpected error", "ConfigurationManager.LoadBlockedWebsites");
                 return CreateDefaultBlockedWebsites();
             }
         }
@@ -66,11 +93,39 @@ namespace LaserFocus.Core.Services
         {
             try
             {
+                LoggingService.Instance.LogInfo($"Saving {websites?.Count ?? 0} blocked websites to: {_blockedWebsitesPath}", "ConfigurationManager.SaveBlockedWebsites");
+                
+                if (websites == null)
+                {
+                    LoggingService.Instance.LogWarning("Null websites list provided, saving empty list", "ConfigurationManager.SaveBlockedWebsites");
+                    websites = new List<string>();
+                }
+
+                EnsureConfigDirectoryExists();
+                
                 var json = JsonSerializer.Serialize(websites, JsonOptions);
                 File.WriteAllText(_blockedWebsitesPath, json);
+                
+                LoggingService.Instance.LogInfo("Successfully saved blocked websites configuration", "ConfigurationManager.SaveBlockedWebsites");
+            }
+            catch (IOException ex)
+            {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.SaveBlockedWebsites", "File I/O error saving blocked websites");
+                throw new InvalidOperationException($"Failed to save blocked websites: Unable to write to configuration file. The file may be in use or the disk may be full.", ex);
+            }
+            catch (JsonException ex)
+            {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.SaveBlockedWebsites", "JSON serialization error");
+                throw new InvalidOperationException($"Failed to save blocked websites: Configuration data could not be serialized.", ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.SaveBlockedWebsites", "Access denied saving blocked websites");
+                throw new InvalidOperationException($"Failed to save blocked websites: Access denied. Check file permissions.", ex);
             }
             catch (Exception ex)
             {
+                LoggingService.Instance.LogException(ex, "ConfigurationManager.SaveBlockedWebsites", "Unexpected error saving blocked websites");
                 throw new InvalidOperationException($"Failed to save blocked websites: {ex.Message}", ex);
             }
         }

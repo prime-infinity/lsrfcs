@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Diagnostics;
 using System.Security.Principal;
@@ -11,7 +12,7 @@ namespace LaserFocus
     /// </summary>
     public partial class App : Application
     {
-        private ConfigurationManager _configurationManager;
+        private ConfigurationManager? _configurationManager;
         private bool _hasAdminPrivileges;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -274,17 +275,31 @@ namespace LaserFocus
         /// <returns>True if running with admin privileges</returns>
         public static bool HasAdministratorPrivileges()
         {
-            return Current.Properties.Contains("HasAdminPrivileges") && 
-                   (bool)Current.Properties["HasAdminPrivileges"];
+            try
+            {
+                return Current?.Properties?.Contains("HasAdminPrivileges") == true && 
+                       Current.Properties["HasAdminPrivileges"] is bool hasPrivileges && hasPrivileges;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
         /// Gets the configuration manager instance
         /// </summary>
         /// <returns>Configuration manager instance or null</returns>
-        public static ConfigurationManager GetConfigurationManager()
+        public static ConfigurationManager? GetConfigurationManager()
         {
-            return Current.Properties["ConfigurationManager"] as ConfigurationManager;
+            try
+            {
+                return Current?.Properties?["ConfigurationManager"] as ConfigurationManager;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

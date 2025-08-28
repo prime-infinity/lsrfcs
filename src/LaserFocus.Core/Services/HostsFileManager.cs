@@ -34,27 +34,61 @@ namespace LaserFocus.Core.Services
         /// <exception cref="ArgumentException">Thrown when website URL is invalid</exception>
         public void BlockWebsite(string website)
         {
-            ValidateAdminPrivileges();
+            LoggingService.Instance.LogInfo($"Attempting to block website: {website}", "HostsFileManager.BlockWebsite");
             
-            var formattedWebsite = FormatWebsiteUrl(website);
-            
-            if (IsWebsiteBlocked(formattedWebsite))
-            {
-                return; // Website is already blocked
-            }
-
             try
             {
+                ValidateAdminPrivileges();
+                
+                // Validate and format the website URL
+                var validationResult = InputValidationService.ValidateWebsiteUrl(website);
+                if (!validationResult.IsValid)
+                {
+                    LoggingService.Instance.LogWarning($"Website validation failed: {validationResult.ErrorMessage}", "HostsFileManager.BlockWebsite");
+                    throw new ArgumentException(validationResult.ErrorMessage);
+                }
+
+                var formattedWebsite = validationResult.FormattedValue!;
+                
+                if (IsWebsiteBlocked(formattedWebsite))
+                {
+                    LoggingService.Instance.LogInfo($"Website already blocked: {formattedWebsite}", "HostsFileManager.BlockWebsite");
+                    return; // Website is already blocked
+                }
+
+                // Create backup before making changes
                 CreateBackupIfNotExists();
                 
+                // Read current hosts file content
                 var hostsContent = File.ReadAllText(_hostsFilePath);
                 var updatedContent = AddWebsiteToHosts(hostsContent, formattedWebsite);
                 
+                // Write updated content to hosts file
                 File.WriteAllText(_hostsFilePath, updatedContent);
+                
+                // Flush DNS cache to ensure changes take effect
                 FlushDnsCache();
+                
+                LoggingService.Instance.LogInfo($"Successfully blocked website: {formattedWebsite}", "HostsFileManager.BlockWebsite");
             }
-            catch (Exception ex) when (!(ex is UnauthorizedAccessException || ex is ArgumentException))
+            catch (UnauthorizedAccessException ex)
             {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.BlockWebsite", $"Access denied while blocking {website}");
+                throw;
+            }
+            catch (ArgumentException ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.BlockWebsite", $"Invalid website URL: {website}");
+                throw;
+            }
+            catch (IOException ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.BlockWebsite", $"File I/O error while blocking {website}");
+                throw new InvalidOperationException($"Failed to block website '{website}': File operation failed. The hosts file may be in use by another program.", ex);
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.BlockWebsite", $"Unexpected error while blocking {website}");
                 throw new InvalidOperationException($"Failed to block website '{website}': {ex.Message}", ex);
             }
         }
@@ -66,25 +100,58 @@ namespace LaserFocus.Core.Services
         /// <exception cref="UnauthorizedAccessException">Thrown when administrator privileges are required</exception>
         public void UnblockWebsite(string website)
         {
-            ValidateAdminPrivileges();
+            LoggingService.Instance.LogInfo($"Attempting to unblock website: {website}", "HostsFileManager.UnblockWebsite");
             
-            var formattedWebsite = FormatWebsiteUrl(website);
-            
-            if (!IsWebsiteBlocked(formattedWebsite))
-            {
-                return; // Website is not blocked
-            }
-
             try
             {
+                ValidateAdminPrivileges();
+                
+                // Validate and format the website URL
+                var validationResult = InputValidationService.ValidateWebsiteUrl(website);
+                if (!validationResult.IsValid)
+                {
+                    LoggingService.Instance.LogWarning($"Website validation failed during unblock: {validationResult.ErrorMessage}", "HostsFileManager.UnblockWebsite");
+                    throw new ArgumentException(validationResult.ErrorMessage);
+                }
+
+                var formattedWebsite = validationResult.FormattedValue!;
+                
+                if (!IsWebsiteBlocked(formattedWebsite))
+                {
+                    LoggingService.Instance.LogInfo($"Website not currently blocked: {formattedWebsite}", "HostsFileManager.UnblockWebsite");
+                    return; // Website is not blocked
+                }
+
+                // Read current hosts file content
                 var hostsContent = File.ReadAllText(_hostsFilePath);
                 var updatedContent = RemoveWebsiteFromHosts(hostsContent, formattedWebsite);
                 
+                // Write updated content to hosts file
                 File.WriteAllText(_hostsFilePath, updatedContent);
+                
+                // Flush DNS cache to ensure changes take effect
                 FlushDnsCache();
+                
+                LoggingService.Instance.LogInfo($"Successfully unblocked website: {formattedWebsite}", "HostsFileManager.UnblockWebsite");
             }
-            catch (Exception ex) when (!(ex is UnauthorizedAccessException))
+            catch (UnauthorizedAccessException ex)
             {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.UnblockWebsite", $"Access denied while unblocking {website}");
+                throw;
+            }
+            catch (ArgumentException ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.UnblockWebsite", $"Invalid website URL: {website}");
+                throw;
+            }
+            catch (IOException ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.UnblockWebsite", $"File I/O error while unblocking {website}");
+                throw new InvalidOperationException($"Failed to unblock website '{website}': File operation failed. The hosts file may be in use by another program.", ex);
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.UnblockWebsite", $"Unexpected error while unblocking {website}");
                 throw new InvalidOperationException($"Failed to unblock website '{website}': {ex.Message}", ex);
             }
         }
@@ -98,14 +165,40 @@ namespace LaserFocus.Core.Services
         {
             try
             {
-                var formattedWebsite = FormatWebsiteUrl(website);
-                var hostsContent = File.ReadAllText(_hostsFilePath);
+                LoggingService.Instance.LogInfo($"Checking if website is blocked: {website}", "HostsFileManager.IsWebsiteBlocked");
                 
+                // Validate and format the website URL
+                var validationResult = InputValidationService.ValidateWebsiteUrl(website);
+                if (!validationResult.IsValid)
+                {
+                    LoggingService.Instance.LogWarning($"Invalid website URL during block check: {validationResult.ErrorMessage}", "HostsFileManager.IsWebsiteBlocked");
+                    return false; // Invalid URLs are considered not blocked
+                }
+
+                var formattedWebsite = validationResult.FormattedValue!;
+                
+                // Check if hosts file exists
+                if (!File.Exists(_hostsFilePath))
+                {
+                    LoggingService.Instance.LogWarning("Hosts file does not exist", "HostsFileManager.IsWebsiteBlocked");
+                    return false;
+                }
+
+                var hostsContent = File.ReadAllText(_hostsFilePath);
                 var laserFocusSection = ExtractLaserFocusSection(hostsContent);
-                return laserFocusSection.Contains($"{REDIRECT_IP} {formattedWebsite}");
+                var isBlocked = laserFocusSection.Contains($"{REDIRECT_IP} {formattedWebsite}");
+                
+                LoggingService.Instance.LogInfo($"Website {formattedWebsite} blocked status: {isBlocked}", "HostsFileManager.IsWebsiteBlocked");
+                return isBlocked;
+            }
+            catch (IOException ex)
+            {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.IsWebsiteBlocked", $"File I/O error checking {website}");
+                throw new InvalidOperationException($"Failed to check if website '{website}' is blocked: Unable to read hosts file.", ex);
             }
             catch (Exception ex)
             {
+                LoggingService.Instance.LogException(ex, "HostsFileManager.IsWebsiteBlocked", $"Unexpected error checking {website}");
                 throw new InvalidOperationException($"Failed to check if website '{website}' is blocked: {ex.Message}", ex);
             }
         }

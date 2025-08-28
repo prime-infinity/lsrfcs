@@ -31,7 +31,11 @@ namespace LaserFocus.Core.Services
 
             try
             {
+                LoggingService.Instance.LogInfo("Starting process enumeration", "ProcessMonitor.GetRunningProcesses");
+                
                 var processes = Process.GetProcesses();
+                var processedCount = 0;
+                var errorCount = 0;
                 
                 foreach (var process in processes)
                 {
@@ -58,22 +62,28 @@ namespace LaserFocus.Core.Services
                             }
 
                             processInfoList.Add(processInfo);
+                            processedCount++;
                         }
                     }
                     catch (Exception ex)
                     {
+                        errorCount++;
                         // Log the error but continue processing other processes
                         LogProcessAction("Error", $"Failed to process {process.ProcessName}: {ex.Message}");
+                        LoggingService.Instance.LogException(ex, "ProcessMonitor.GetRunningProcesses", $"Error processing process {process.ProcessName}");
                     }
                     finally
                     {
                         process.Dispose();
                     }
                 }
+                
+                LoggingService.Instance.LogInfo($"Process enumeration completed. Processed: {processedCount}, Errors: {errorCount}, Total found: {processInfoList.Count}", "ProcessMonitor.GetRunningProcesses");
             }
             catch (Exception ex)
             {
                 LogProcessAction("Error", $"Failed to enumerate processes: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "ProcessMonitor.GetRunningProcesses", "Critical error during process enumeration");
             }
 
             return processInfoList;
@@ -88,6 +98,8 @@ namespace LaserFocus.Core.Services
         {
             try
             {
+                LoggingService.Instance.LogInfo($"Attempting to terminate process ID: {processId}", "ProcessMonitor.TerminateProcess");
+                
                 var process = Process.GetProcessById(processId);
                 var processName = process.ProcessName;
 
@@ -95,6 +107,7 @@ namespace LaserFocus.Core.Services
                 if (IsProcessAllowed(processName))
                 {
                     LogProcessAction("Skipped", $"Process {processName} (ID: {processId}) is allowed");
+                    LoggingService.Instance.LogInfo($"Skipped terminating allowed process: {processName} (ID: {processId})", "ProcessMonitor.TerminateProcess");
                     return false;
                 }
 
@@ -102,29 +115,52 @@ namespace LaserFocus.Core.Services
                 if (IsCriticalSystemProcess(processName))
                 {
                     LogProcessAction("Skipped", $"Process {processName} (ID: {processId}) is a critical system process");
+                    LoggingService.Instance.LogWarning($"Skipped terminating critical system process: {processName} (ID: {processId})", "ProcessMonitor.TerminateProcess");
                     return false;
                 }
 
+                // Attempt to terminate the process
                 process.Kill();
-                process.WaitForExit(5000); // Wait up to 5 seconds for process to exit
                 
-                LogProcessAction("Terminated", $"Process {processName} (ID: {processId}) was terminated");
+                // Wait for process to exit with timeout
+                var exited = process.WaitForExit(5000); // Wait up to 5 seconds for process to exit
+                
+                if (exited)
+                {
+                    LogProcessAction("Terminated", $"Process {processName} (ID: {processId}) was terminated successfully");
+                    LoggingService.Instance.LogInfo($"Successfully terminated process: {processName} (ID: {processId})", "ProcessMonitor.TerminateProcess");
+                }
+                else
+                {
+                    LogProcessAction("Warning", $"Process {processName} (ID: {processId}) did not exit within timeout");
+                    LoggingService.Instance.LogWarning($"Process did not exit within timeout: {processName} (ID: {processId})", "ProcessMonitor.TerminateProcess");
+                }
+                
                 return true;
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
                 // Process doesn't exist or has already exited
                 LogProcessAction("Info", $"Process with ID {processId} no longer exists");
+                LoggingService.Instance.LogInfo($"Process {processId} no longer exists or has already exited", "ProcessMonitor.TerminateProcess");
                 return true;
             }
             catch (InvalidOperationException ex)
             {
                 LogProcessAction("Error", $"Cannot terminate process {processId}: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "ProcessMonitor.TerminateProcess", $"Cannot terminate process {processId}");
+                return false;
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                LogProcessAction("Error", $"Access denied terminating process {processId}: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "ProcessMonitor.TerminateProcess", $"Access denied terminating process {processId}");
                 return false;
             }
             catch (Exception ex)
             {
                 LogProcessAction("Error", $"Failed to terminate process {processId}: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "ProcessMonitor.TerminateProcess", $"Unexpected error terminating process {processId}");
                 return false;
             }
         }

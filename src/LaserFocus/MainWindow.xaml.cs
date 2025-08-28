@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using LaserFocus.Core.Models;
 using LaserFocus.Core.Services;
+using LaserFocus.Services;
 
 namespace LaserFocus
 {
@@ -20,6 +21,7 @@ namespace LaserFocus
         private readonly HostsFileManager _hostsFileManager;
         private readonly ConfigurationManager _configurationManager;
         private readonly ProcessMonitor _processMonitor;
+        private readonly IUserFeedbackService _userFeedbackService;
         private bool _isMonitoring = false;
         
         // ObservableCollections for data binding
@@ -37,6 +39,7 @@ namespace LaserFocus
             _hostsFileManager = new HostsFileManager();
             _configurationManager = App.GetConfigurationManager() ?? new ConfigurationManager();
             _processMonitor = new ProcessMonitor(_allowedProcesses);
+            _userFeedbackService = new UserFeedbackService();
             
             // Initialize collections
             _blockedWebsites = new ObservableCollection<string>();
@@ -109,18 +112,47 @@ namespace LaserFocus
         {
             string website = WebsiteUrlTextBox.Text?.Trim();
             
+            LoggingService.Instance.LogInfo($"User attempting to add website: {website}", "MainWindow.AddWebsiteButton_Click");
+            
+            // Validate input
             if (string.IsNullOrEmpty(website))
             {
-                UpdateStatus("Please enter a website URL to block.");
+                var message = "Please enter a website URL to block.";
+                UpdateStatus(message);
+                _userFeedbackService.ShowWarning("Please enter a website URL in the text box before clicking 'Block Website'.", "Input Required");
                 return;
             }
             
             try
             {
-                // Check if website is already blocked
-                if (BlockedWebsites.Contains(website, StringComparer.OrdinalIgnoreCase))
+                // Validate website URL format first
+                var validationResult = InputValidationService.ValidateWebsiteUrl(website);
+                if (!validationResult.IsValid)
                 {
-                    UpdateStatus($"Website '{website}' is already in the blocked list.");
+                    UpdateStatus($"Invalid website URL: {validationResult.ErrorMessage}");
+                    _userFeedbackService.ShowError(validationResult.ErrorMessage, "Invalid Website URL");
+                    return;
+                }
+
+                var formattedWebsite = validationResult.FormattedValue!;
+                
+                // Show warnings if any
+                if (validationResult.Warnings.Any())
+                {
+                    var warningMessage = string.Join("\n", validationResult.Warnings);
+                    if (!_userFeedbackService.ShowConfirmation($"Warning:\n{warningMessage}\n\nDo you want to continue blocking this website?", "Website Validation Warning"))
+                    {
+                        UpdateStatus("Website blocking cancelled by user.");
+                        return;
+                    }
+                }
+                
+                // Check if website is already blocked
+                if (BlockedWebsites.Contains(formattedWebsite, StringComparer.OrdinalIgnoreCase))
+                {
+                    var message = $"Website '{formattedWebsite}' is already in the blocked list.";
+                    UpdateStatus(message);
+                    _userFeedbackService.ShowInfo(message, "Already Blocked");
                     return;
                 }
                 
@@ -128,26 +160,51 @@ namespace LaserFocus
                 _hostsFileManager.BlockWebsite(website);
                 
                 // Add to UI collection
-                BlockedWebsites.Add(website);
+                BlockedWebsites.Add(formattedWebsite);
                 
                 // Save to configuration
                 SaveBlockedWebsitesToConfig();
                 
                 // Clear input and show success message
                 WebsiteUrlTextBox.Clear();
-                UpdateStatus($"Successfully blocked '{website}'. Website access has been restricted.");
+                var successMessage = $"Successfully blocked '{formattedWebsite}'. Website access has been restricted system-wide.";
+                UpdateStatus(successMessage);
+                _userFeedbackService.ShowSuccess(successMessage, "Website Blocked");
+                
+                LoggingService.Instance.LogInfo($"Successfully blocked website: {formattedWebsite}", "MainWindow.AddWebsiteButton_Click");
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
+                LoggingService.Instance.LogException(ex, "MainWindow.AddWebsiteButton_Click", "Access denied blocking website");
                 HandlePrivilegeError("block websites");
+                _userFeedbackService.ShowError(
+                    "Administrator privileges are required to block websites. Please restart the application as administrator.",
+                    "Access Denied",
+                    ex);
             }
             catch (ArgumentException ex)
             {
-                UpdateStatus($"Invalid website URL: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "MainWindow.AddWebsiteButton_Click", "Invalid website URL");
+                var message = $"Invalid website URL: {ex.Message}";
+                UpdateStatus(message);
+                _userFeedbackService.ShowError(message, "Invalid Input");
+            }
+            catch (InvalidOperationException ex)
+            {
+                LoggingService.Instance.LogException(ex, "MainWindow.AddWebsiteButton_Click", "Operation failed");
+                var message = $"Failed to block website: {ex.Message}";
+                UpdateStatus(message);
+                _userFeedbackService.ShowError(message, "Operation Failed");
             }
             catch (Exception ex)
             {
-                UpdateStatus($"Failed to block website: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "MainWindow.AddWebsiteButton_Click", "Unexpected error blocking website");
+                var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                UpdateStatus($"Failed to block website: {friendlyMessage}");
+                _userFeedbackService.ShowDetailedError(
+                    "An unexpected error occurred while blocking the website.",
+                    ex.Message,
+                    "Unexpected Error");
             }
         }
 
@@ -158,6 +215,17 @@ namespace LaserFocus
         {
             if (sender is Button button && button.Tag is string website)
             {
+                LoggingService.Instance.LogInfo($"User attempting to remove website: {website}", "MainWindow.RemoveWebsiteButton_Click");
+                
+                // Confirm removal with user
+                if (!_userFeedbackService.ShowConfirmation(
+                    $"Are you sure you want to unblock '{website}'?\n\nThis will restore access to the website.",
+                    "Confirm Unblock"))
+                {
+                    UpdateStatus("Website unblocking cancelled by user.");
+                    return;
+                }
+                
                 try
                 {
                     // Unblock the website using HostsFileManager
@@ -169,15 +237,37 @@ namespace LaserFocus
                     // Save to configuration
                     SaveBlockedWebsitesToConfig();
                     
-                    UpdateStatus($"Successfully unblocked '{website}'. Website access has been restored.");
+                    var successMessage = $"Successfully unblocked '{website}'. Website access has been restored.";
+                    UpdateStatus(successMessage);
+                    _userFeedbackService.ShowSuccess(successMessage, "Website Unblocked");
+                    
+                    LoggingService.Instance.LogInfo($"Successfully unblocked website: {website}", "MainWindow.RemoveWebsiteButton_Click");
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException ex)
                 {
+                    LoggingService.Instance.LogException(ex, "MainWindow.RemoveWebsiteButton_Click", "Access denied unblocking website");
                     HandlePrivilegeError("unblock websites");
+                    _userFeedbackService.ShowError(
+                        "Administrator privileges are required to unblock websites. Please restart the application as administrator.",
+                        "Access Denied",
+                        ex);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LoggingService.Instance.LogException(ex, "MainWindow.RemoveWebsiteButton_Click", "Operation failed");
+                    var message = $"Failed to unblock website: {ex.Message}";
+                    UpdateStatus(message);
+                    _userFeedbackService.ShowError(message, "Operation Failed");
                 }
                 catch (Exception ex)
                 {
-                    UpdateStatus($"Failed to unblock website: {ex.Message}");
+                    LoggingService.Instance.LogException(ex, "MainWindow.RemoveWebsiteButton_Click", "Unexpected error unblocking website");
+                    var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                    UpdateStatus($"Failed to unblock website: {friendlyMessage}");
+                    _userFeedbackService.ShowDetailedError(
+                        "An unexpected error occurred while unblocking the website.",
+                        ex.Message,
+                        "Unexpected Error");
                 }
             }
         }
@@ -187,10 +277,24 @@ namespace LaserFocus
         /// </summary>
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
+            LoggingService.Instance.LogInfo("User attempting to start monitoring", "MainWindow.StartButton_Click");
+            
             try
             {
                 // Check privileges before starting monitoring
                 bool hasAdminPrivileges = App.HasAdministratorPrivileges();
+                
+                // Warn user about limited functionality if no admin privileges
+                if (!hasAdminPrivileges)
+                {
+                    if (!_userFeedbackService.ShowConfirmation(
+                        "The application is running with limited privileges. Process monitoring and termination may not work properly.\n\nDo you want to continue anyway?",
+                        "Limited Privileges Warning"))
+                    {
+                        UpdateStatus("Monitoring start cancelled by user due to privilege limitations.");
+                        return;
+                    }
+                }
                 
                 IsMonitoring = true;
                 _processTimer.Start();
@@ -204,11 +308,27 @@ namespace LaserFocus
                     : "Monitoring started with limited privileges. Process termination may not work properly.";
                 
                 UpdateStatus(statusMessage);
+                
+                // Show success confirmation
+                var confirmationMessage = hasAdminPrivileges
+                    ? "Process monitoring is now active. Non-allowed applications will be automatically terminated."
+                    : "Process monitoring is now active with limited functionality due to insufficient privileges.";
+                
+                _userFeedbackService.ShowSuccess(confirmationMessage, "Monitoring Started");
+                
+                LoggingService.Instance.LogInfo($"Monitoring started successfully. Admin privileges: {hasAdminPrivileges}", "MainWindow.StartButton_Click");
             }
             catch (Exception ex)
             {
-                UpdateStatus($"Failed to start monitoring: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "MainWindow.StartButton_Click", "Failed to start monitoring");
+                
                 IsMonitoring = false;
+                var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                UpdateStatus($"Failed to start monitoring: {friendlyMessage}");
+                _userFeedbackService.ShowDetailedError(
+                    "Failed to start process monitoring.",
+                    ex.Message,
+                    "Monitoring Error");
             }
         }
 
@@ -217,6 +337,8 @@ namespace LaserFocus
         /// </summary>
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
+            LoggingService.Instance.LogInfo("User attempting to stop monitoring", "MainWindow.StopButton_Click");
+            
             try
             {
                 IsMonitoring = false;
@@ -225,11 +347,25 @@ namespace LaserFocus
                 // Clear process list when monitoring stops
                 RunningProcesses.Clear();
                 
-                UpdateStatus("Monitoring stopped. Application termination disabled, website blocks remain active.");
+                var statusMessage = "Monitoring stopped. Application termination disabled, website blocks remain active.";
+                UpdateStatus(statusMessage);
+                
+                _userFeedbackService.ShowSuccess(
+                    "Process monitoring has been stopped. Website blocking remains active.",
+                    "Monitoring Stopped");
+                
+                LoggingService.Instance.LogInfo("Monitoring stopped successfully", "MainWindow.StopButton_Click");
             }
             catch (Exception ex)
             {
-                UpdateStatus($"Error stopping monitoring: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "MainWindow.StopButton_Click", "Error stopping monitoring");
+                
+                var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                UpdateStatus($"Error stopping monitoring: {friendlyMessage}");
+                _userFeedbackService.ShowError(
+                    "An error occurred while stopping process monitoring.",
+                    "Stop Monitoring Error",
+                    ex);
             }
         }
 
@@ -255,6 +391,11 @@ namespace LaserFocus
         {
             try
             {
+                LoggingService.Instance.LogInfo("Initializing MainWindow application", "MainWindow.InitializeApplication");
+                
+                // Clean up old log files
+                LoggingService.Instance.CleanupOldLogs();
+                
                 // Get privilege status from application level
                 bool hasAdminPrivileges = App.HasAdministratorPrivileges();
                 
@@ -273,10 +414,20 @@ namespace LaserFocus
                     : "Application started with limited privileges. Some features may not work.";
                 
                 UpdateStatus(statusMessage);
+                
+                LoggingService.Instance.LogInfo($"MainWindow initialization completed. Admin privileges: {hasAdminPrivileges}", "MainWindow.InitializeApplication");
             }
             catch (Exception ex)
             {
-                UpdateStatus($"Initialization error: {ex.Message}");
+                LoggingService.Instance.LogException(ex, "MainWindow.InitializeApplication", "Critical error during initialization");
+                
+                var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                UpdateStatus($"Initialization error: {friendlyMessage}");
+                
+                _userFeedbackService.ShowDetailedError(
+                    "An error occurred during application initialization. Some features may not work properly.",
+                    ex.Message,
+                    "Initialization Error");
             }
         }
 

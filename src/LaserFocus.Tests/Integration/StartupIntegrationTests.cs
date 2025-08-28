@@ -51,7 +51,7 @@ namespace LaserFocus.Tests.Integration
             _configurationManager.InitializeDefaultConfiguration();
             
             // Add some test data
-            var testWebsites = new[] { "example.com", "test.com" };
+            var testWebsites = new List<string> { "example.com", "test.com" };
             _configurationManager.SaveBlockedWebsites(testWebsites);
             
             // Act
