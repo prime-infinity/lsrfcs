@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace LaserFocus
         private readonly DispatcherTimer _processTimer;
         private readonly HostsFileManager _hostsFileManager;
         private readonly ConfigurationManager _configurationManager;
+        private readonly ProcessMonitor _processMonitor;
         private bool _isMonitoring = false;
         
         // ObservableCollections for data binding
@@ -34,6 +36,7 @@ namespace LaserFocus
             // Initialize services
             _hostsFileManager = new HostsFileManager();
             _configurationManager = new ConfigurationManager();
+            _processMonitor = new ProcessMonitor(_allowedProcesses);
             
             // Initialize collections
             _blockedWebsites = new ObservableCollection<string>();
@@ -184,12 +187,21 @@ namespace LaserFocus
         /// </summary>
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            IsMonitoring = true;
-            _processTimer.Start();
-            
-            UpdateStatus("Monitoring started. Checking processes every 2 seconds.");
-            
-            // TODO: Integrate with ProcessMonitor and HostsFileManager in future tasks
+            try
+            {
+                IsMonitoring = true;
+                _processTimer.Start();
+                
+                // Immediately update process list when monitoring starts
+                UpdateProcessList();
+                
+                UpdateStatus("Monitoring started. Checking processes every 2 seconds and terminating non-allowed applications.");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Failed to start monitoring: {ex.Message}");
+                IsMonitoring = false;
+            }
         }
 
         /// <summary>
@@ -197,15 +209,20 @@ namespace LaserFocus
         /// </summary>
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
-            IsMonitoring = false;
-            _processTimer.Stop();
-            
-            // Clear process list when monitoring stops
-            RunningProcesses.Clear();
-            
-            UpdateStatus("Monitoring stopped.");
-            
-            // TODO: Integrate with ProcessMonitor in future tasks
+            try
+            {
+                IsMonitoring = false;
+                _processTimer.Stop();
+                
+                // Clear process list when monitoring stops
+                RunningProcesses.Clear();
+                
+                UpdateStatus("Monitoring stopped. Application termination disabled, website blocks remain active.");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Error stopping monitoring: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -215,8 +232,7 @@ namespace LaserFocus
         {
             if (!IsMonitoring) return;
             
-            // TODO: Replace with actual ProcessMonitor integration in future tasks
-            // For now, simulate process monitoring with dummy data
+            // Update process list and terminate blocked applications
             UpdateProcessList();
         }
 
@@ -327,30 +343,70 @@ namespace LaserFocus
 
 
         /// <summary>
-        /// Updates the process list display (placeholder implementation)
+        /// Updates the process list display using ProcessMonitor
         /// </summary>
         private void UpdateProcessList()
         {
-            // TODO: Replace with actual ProcessMonitor integration in future tasks
-            // This is a placeholder implementation for UI testing
-            
-            // Clear existing processes
-            RunningProcesses.Clear();
-            
-            // Add some dummy processes for demonstration
-            var dummyProcesses = new[]
+            try
             {
-                new ProcessInfo { ProcessName = "chrome", Id = 1234, Status = "Allowed", LastSeen = DateTime.Now },
-                new ProcessInfo { ProcessName = "code", Id = 5678, Status = "Allowed", LastSeen = DateTime.Now },
-                new ProcessInfo { ProcessName = "notepad", Id = 9012, Status = "Allowed", LastSeen = DateTime.Now }
-            };
-            
-            foreach (var process in dummyProcesses)
-            {
-                RunningProcesses.Add(process);
+                // Get current running processes from ProcessMonitor
+                var currentProcesses = _processMonitor.GetRunningProcesses();
+                
+                // Clear existing processes
+                RunningProcesses.Clear();
+                
+                // Add current processes to the UI collection
+                foreach (var process in currentProcesses)
+                {
+                    RunningProcesses.Add(process);
+                    
+                    // If process is blocked, attempt to terminate it
+                    if (process.Status == "Blocked")
+                    {
+                        TerminateBlockedProcess(process);
+                    }
+                }
+                
+                UpdateStatus($"Process list updated. Found {RunningProcesses.Count} running processes.");
             }
-            
-            UpdateStatus($"Process list updated. Found {RunningProcesses.Count} running processes.");
+            catch (Exception ex)
+            {
+                UpdateStatus($"Error updating process list: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Terminates a blocked process with error handling
+        /// </summary>
+        /// <param name="processInfo">The process information for the process to terminate</param>
+        private void TerminateBlockedProcess(ProcessInfo processInfo)
+        {
+            try
+            {
+                bool terminated = _processMonitor.TerminateProcess(processInfo.Id);
+                
+                if (terminated)
+                {
+                    UpdateStatus($"Terminated blocked application: {processInfo.ProcessName} (ID: {processInfo.Id})");
+                }
+                else
+                {
+                    UpdateStatus($"Failed to terminate {processInfo.ProcessName} (ID: {processInfo.Id}) - may be protected or already closed");
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Error terminating process {processInfo.ProcessName}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets the process monitoring action log for debugging purposes
+        /// </summary>
+        /// <returns>List of process action log entries</returns>
+        public List<string> GetProcessActionLog()
+        {
+            return _processMonitor.GetProcessActionLog();
         }
 
         #endregion
