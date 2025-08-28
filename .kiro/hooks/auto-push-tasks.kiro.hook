@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto Push Tasks",
+  "description": "Automatically pushes changes to the main branch in GitHub when a task is completed, using a suitable commit message describing the completed task",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A task has been completed and files have been modified. Please analyze the changes made and create a descriptive commit message that summarizes the task that was completed. Then push the changes to the main branch in GitHub using git commands. The commit message should be clear and describe what functionality or task was accomplished."
+  }
+}

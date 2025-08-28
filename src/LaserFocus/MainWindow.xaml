@@ -1,0 +1,13 @@
+<Window x:Class="LaserFocus.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Laser Focus - Productivity App" Height="600" Width="800"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <!-- UI implementation will be added in future tasks -->
+        <TextBlock Text="Laser Focus - Productivity App" 
+                   HorizontalAlignment="Center" 
+                   VerticalAlignment="Center" 
+                   FontSize="24"/>
+    </Grid>
+</Window>
