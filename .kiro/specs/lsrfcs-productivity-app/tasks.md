@@ -7,7 +7,7 @@
   - Create AppSettings and BlockedWebsite data model classes
   - _Requirements: 6.3, 4.1_
 
-- [ ] 2. Implement configuration management system
+- [x] 2. Implement configuration management system
 
   - Create ConfigurationManager class for persistent storage
   - Implement JSON serialization for blocked websites and allowed applications
