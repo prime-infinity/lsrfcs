@@ -35,7 +35,7 @@ namespace LaserFocus
             
             // Initialize services
             _hostsFileManager = new HostsFileManager();
-            _configurationManager = new ConfigurationManager();
+            _configurationManager = App.GetConfigurationManager() ?? new ConfigurationManager();
             _processMonitor = new ProcessMonitor(_allowedProcesses);
             
             // Initialize collections
@@ -139,7 +139,7 @@ namespace LaserFocus
             }
             catch (UnauthorizedAccessException)
             {
-                UpdateStatus("Administrator privileges required to block websites. Please run as administrator.");
+                HandlePrivilegeError("block websites");
             }
             catch (ArgumentException ex)
             {
@@ -173,7 +173,7 @@ namespace LaserFocus
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    UpdateStatus("Administrator privileges required to unblock websites. Please run as administrator.");
+                    HandlePrivilegeError("unblock websites");
                 }
                 catch (Exception ex)
                 {
@@ -189,13 +189,21 @@ namespace LaserFocus
         {
             try
             {
+                // Check privileges before starting monitoring
+                bool hasAdminPrivileges = App.HasAdministratorPrivileges();
+                
                 IsMonitoring = true;
                 _processTimer.Start();
                 
                 // Immediately update process list when monitoring starts
                 UpdateProcessList();
                 
-                UpdateStatus("Monitoring started. Checking processes every 2 seconds and terminating non-allowed applications.");
+                // Provide appropriate status message based on privileges
+                string statusMessage = hasAdminPrivileges
+                    ? "Monitoring started with full privileges. Checking processes every 2 seconds and terminating non-allowed applications."
+                    : "Monitoring started with limited privileges. Process termination may not work properly.";
+                
+                UpdateStatus(statusMessage);
             }
             catch (Exception ex)
             {
@@ -247,18 +255,24 @@ namespace LaserFocus
         {
             try
             {
-                // Check administrator privileges
-                CheckAdministratorPrivileges();
+                // Get privilege status from application level
+                bool hasAdminPrivileges = App.HasAdministratorPrivileges();
                 
-                // Initialize default configuration if needed
-                _configurationManager.InitializeDefaultConfiguration();
+                // Display privilege status
+                DisplayPrivilegeStatus(hasAdminPrivileges);
                 
                 // Load blocked websites from configuration
                 LoadBlockedWebsitesFromConfig();
                 
-                // Update UI state
-                UpdateUIState();
-                UpdateStatus("Application started. Ready to begin monitoring.");
+                // Update UI state based on privileges
+                UpdateUIStateForPrivileges(hasAdminPrivileges);
+                
+                // Set initial status message
+                string statusMessage = hasAdminPrivileges 
+                    ? "Application started with full privileges. All features available."
+                    : "Application started with limited privileges. Some features may not work.";
+                
+                UpdateStatus(statusMessage);
             }
             catch (Exception ex)
             {
@@ -267,17 +281,35 @@ namespace LaserFocus
         }
 
         /// <summary>
-        /// Checks if the application has administrator privileges
+        /// Displays the current privilege status to the user
         /// </summary>
-        private void CheckAdministratorPrivileges()
+        /// <param name="hasAdminPrivileges">Whether the application has admin privileges</param>
+        private void DisplayPrivilegeStatus(bool hasAdminPrivileges)
         {
-            if (!_hostsFileManager.HasAdministratorPrivileges())
+            if (hasAdminPrivileges)
             {
-                UpdateStatus("Warning: Administrator privileges not detected. Website blocking may not work properly.");
+                UpdateStatus("Administrator privileges confirmed. All features available.");
             }
             else
             {
-                UpdateStatus("Administrator privileges confirmed. All features available.");
+                UpdateStatus("Limited privileges detected. Website blocking and process termination may not work.");
+            }
+        }
+
+        /// <summary>
+        /// Updates UI state based on privilege level
+        /// </summary>
+        /// <param name="hasAdminPrivileges">Whether the application has admin privileges</param>
+        private void UpdateUIStateForPrivileges(bool hasAdminPrivileges)
+        {
+            // Update UI state
+            UpdateUIState();
+            
+            // If no admin privileges, show warning in UI
+            if (!hasAdminPrivileges)
+            {
+                // Future enhancement: Could disable certain UI elements or show warning indicators
+                UpdateStatus("Warning: Running with limited privileges. Some features may not function properly.");
             }
         }
 
@@ -338,6 +370,24 @@ namespace LaserFocus
         private void UpdateStatus(string message)
         {
             StatusTextBlock.Text = $"{DateTime.Now:HH:mm:ss} - {message}";
+        }
+
+        /// <summary>
+        /// Handles privilege-related errors with appropriate user feedback
+        /// </summary>
+        /// <param name="operation">The operation that failed due to insufficient privileges</param>
+        private void HandlePrivilegeError(string operation)
+        {
+            bool hasAdminPrivileges = App.HasAdministratorPrivileges();
+            
+            if (!hasAdminPrivileges)
+            {
+                UpdateStatus($"Cannot {operation}: Administrator privileges required. Please restart as administrator for full functionality.");
+            }
+            else
+            {
+                UpdateStatus($"Failed to {operation}: Unexpected privilege error occurred.");
+            }
         }
 
 
@@ -426,9 +476,64 @@ namespace LaserFocus
 
         protected override void OnClosed(EventArgs e)
         {
-            // Stop timer and cleanup resources
-            _processTimer?.Stop();
+            try
+            {
+                // Perform window-specific cleanup
+                PerformWindowCleanup();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Cleanup error: {ex.Message}");
+            }
+            
             base.OnClosed(e);
+        }
+
+        /// <summary>
+        /// Performs cleanup specific to the main window
+        /// </summary>
+        private void PerformWindowCleanup()
+        {
+            try
+            {
+                // Stop monitoring timer
+                if (_processTimer != null)
+                {
+                    _processTimer.Stop();
+                    _processTimer.Tick -= ProcessTimer_Tick;
+                }
+                
+                // Save current configuration before closing
+                SaveCurrentConfiguration();
+                
+                // Clear collections
+                RunningProcesses?.Clear();
+                
+                UpdateStatus("Window cleanup completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error during window cleanup: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Saves the current application configuration
+        /// </summary>
+        private void SaveCurrentConfiguration()
+        {
+            try
+            {
+                // Save blocked websites
+                SaveBlockedWebsitesToConfig();
+                
+                // Future enhancement: Save other settings like window position, monitoring preferences, etc.
+                System.Diagnostics.Debug.WriteLine("Configuration saved successfully.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving configuration: {ex.Message}");
+            }
         }
 
         #endregion

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LaserFocus.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9ff0fda10e5cfe8157a3e97e9152931cde888108")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+317f23e711d82f11f27665bee8635c98065e4624")]
 [assembly: System.Reflection.AssemblyProductAttribute("LaserFocus.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LaserFocus.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
