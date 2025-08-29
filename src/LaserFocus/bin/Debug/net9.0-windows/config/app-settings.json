@@ -1,0 +1,11 @@
+{
+  "blockedWebsites": [],
+  "allowedApplications": [
+    "chrome",
+    "code",
+    "kiro"
+  ],
+  "monitoringInterval": 2000,
+  "startMinimized": false,
+  "showNotifications": true
+}

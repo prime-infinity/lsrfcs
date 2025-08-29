@@ -1,0 +1,34 @@
+2025-08-29 11:41:04.763 INFO [ConfigurationManager.SaveBlockedWebsites]: Saving 5 blocked websites to: C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\config\blocked-websites.json
+2025-08-29 11:41:04.799 INFO [ConfigurationManager.SaveBlockedWebsites]: Successfully saved blocked websites configuration
+2025-08-29 11:41:05.271 INFO [MainWindow.InitializeApplication]: Initializing MainWindow application
+2025-08-29 11:41:05.276 INFO [ConfigurationManager.LoadBlockedWebsites]: Loading blocked websites from: C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\config\blocked-websites.json
+2025-08-29 11:41:05.277 INFO [ConfigurationManager.LoadBlockedWebsites]: Successfully loaded 5 blocked websites
+2025-08-29 11:41:05.278 INFO [MainWindow.InitializeApplication]: MainWindow initialization completed. Admin privileges: True
+2025-08-29 11:41:45.037 INFO [MainWindow.AddWebsiteButton_Click]: User attempting to add website: youtube.com
+2025-08-29 11:41:45.043 INFO [InputValidationService]: Validating website URL: youtube.com
+2025-08-29 11:41:45.088 INFO [InputValidationService]: Website URL validation successful: youtube.com
+2025-08-29 11:41:45.090 INFO [UserFeedbackService]: Info message shown: Website 'youtube.com' is already in the blocked list.
+2025-08-29 11:42:10.073 INFO [MainWindow.StartButton_Click]: User attempting to start monitoring
+2025-08-29 11:42:10.078 INFO [ProcessMonitor.GetRunningProcesses]: Starting process enumeration
+2025-08-29 11:42:10.130 INFO [ProcessMonitor.GetRunningProcesses]: Process enumeration completed. Processed: 8, Errors: 0, Total found: 8
+2025-08-29 11:42:10.134 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 636
+2025-08-29 11:42:10.161 INFO [ProcessMonitor.TerminateProcess]: Successfully terminated process: ApplicationFrameHost (ID: 636)
+2025-08-29 11:42:10.162 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 11596
+2025-08-29 11:42:10.211 INFO [ProcessMonitor.TerminateProcess]: Successfully terminated process: WindowsInternal.ComposableShell.Experiences.TextInput.InputApp (ID: 11596)
+2025-08-29 11:42:10.212 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 9640
+2025-08-29 11:42:10.213 INFO [ProcessMonitor.TerminateProcess]: Process 9640 no longer exists or has already exited
+2025-08-29 11:42:10.214 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 1048
+2025-08-29 11:42:10.297 INFO [ProcessMonitor.TerminateProcess]: Successfully terminated process: MicrosoftEdgeCP (ID: 1048)
+2025-08-29 11:42:10.298 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 10560
+2025-08-29 11:42:10.301 INFO [ProcessMonitor.TerminateProcess]: Successfully terminated process: cmd (ID: 10560)
+2025-08-29 11:42:10.302 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 12068
+2025-08-29 11:42:30.695 INFO [MainWindow.InitializeApplication]: Initializing MainWindow application
+2025-08-29 11:42:30.709 INFO [ConfigurationManager.LoadBlockedWebsites]: Loading blocked websites from: C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\config\blocked-websites.json
+2025-08-29 11:42:30.710 INFO [ConfigurationManager.LoadBlockedWebsites]: Successfully loaded 5 blocked websites
+2025-08-29 11:42:30.711 INFO [MainWindow.InitializeApplication]: MainWindow initialization completed. Admin privileges: True
+2025-08-29 11:42:35.077 INFO [MainWindow.StartButton_Click]: User attempting to start monitoring
+2025-08-29 11:42:35.086 INFO [ProcessMonitor.GetRunningProcesses]: Starting process enumeration
+2025-08-29 11:42:35.152 INFO [ProcessMonitor.GetRunningProcesses]: Process enumeration completed. Processed: 4, Errors: 0, Total found: 4
+2025-08-29 11:42:35.156 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 15088
+2025-08-29 11:42:35.160 INFO [ProcessMonitor.TerminateProcess]: Successfully terminated process: cmd (ID: 15088)
+2025-08-29 11:42:35.160 INFO [ProcessMonitor.TerminateProcess]: Attempting to terminate process ID: 3392
