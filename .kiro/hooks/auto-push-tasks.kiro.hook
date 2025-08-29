@@ -4,7 +4,7 @@
   "description": "Automatically pushes changes to the main branch in GitHub when a task is completed, using a suitable commit message describing the completed task",
   "version": "1",
   "when": {
-    "type": "fileEdited",
+    "type": "userTriggered",
     "patterns": [
       "**/*"
     ]

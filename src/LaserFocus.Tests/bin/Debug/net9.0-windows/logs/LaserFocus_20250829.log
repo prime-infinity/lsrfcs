@@ -1,0 +1,12 @@
+2025-08-29 11:12:16.878 ERROR: Exception: Test exception
+2025-08-29 11:12:16.882 INFO [TestSource]: Test info message
+2025-08-29 11:12:16.924 INFO [TestSource]: Test message 0
+2025-08-29 11:12:16.925 INFO [TestSource]: Test message 1
+2025-08-29 11:12:16.925 INFO [TestSource]: Test message 2
+2025-08-29 11:12:16.926 INFO [TestSource]: Test message 3
+2025-08-29 11:12:16.927 INFO [TestSource]: Test message 4
+2025-08-29 11:12:16.927 INFO [TestSource]: Test message 5
+2025-08-29 11:12:16.928 INFO [TestSource]: Test message 6
+2025-08-29 11:12:16.928 INFO [TestSource]: Test message 7
+2025-08-29 11:12:16.947 INFO [TestSource]: Test message 8
+2025-08-29 11:12:16.949 INFO [TestSource]: Test message 9
