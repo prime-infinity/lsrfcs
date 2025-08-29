@@ -78,7 +78,7 @@
   - Add input validation for website URLs
   - _Requirements: 1.5, 2.5, 3.5, 5.2, 5.5_
 
-- [ ] 10. Create unit tests for core components
+- [x] 10. Create unit tests for core components
 
   - Write unit tests for HostsFileManager with mocked file system
   - Create unit tests for ProcessMonitor with mocked processes
@@ -87,7 +87,7 @@
   - Implement tests for URL validation and formatting
   - _Requirements: 1.1, 1.4, 2.1, 5.1_
 
-- [ ] 11. Implement integration testing
+- [x] 11. Implement integration testing
 
   - Create end-to-end tests for website blocking functionality
   - Test process monitoring and termination integration
