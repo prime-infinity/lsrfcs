@@ -138,7 +138,7 @@ namespace LaserFocus.Core.Services
                 
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException)
             {
                 // Process doesn't exist or has already exited
                 LogProcessAction("Info", $"Process with ID {processId} no longer exists");
@@ -205,13 +205,19 @@ namespace LaserFocus.Core.Services
         {
             try
             {
-                // Skip processes without a main window title (typically system processes)
+                // Skip processes that we can't access (typically system processes)
+                var processName = process.ProcessName;
+                var processId = process.Id;
+
+                // Always include allowed processes regardless of window title
+                if (IsProcessAllowed(processName))
+                {
+                    return true;
+                }
+
+                // For other processes, check if they have a main window title (user applications typically do)
                 if (string.IsNullOrEmpty(process.MainWindowTitle))
                     return false;
-
-                // Skip processes that we can't access (typically system processes)
-                var _ = process.ProcessName;
-                var __ = process.Id;
 
                 return true;
             }

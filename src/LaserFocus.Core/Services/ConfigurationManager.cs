@@ -62,6 +62,14 @@ namespace LaserFocus.Core.Services
                 var websites = JsonSerializer.Deserialize<List<string>>(json, JsonOptions);
                 var result = websites ?? new List<string>();
                 
+                // If the list is empty, use default websites for first-time setup
+                if (result.Count == 0)
+                {
+                    LoggingService.Instance.LogInfo("Blocked websites list is empty, using default configuration", "ConfigurationManager.LoadBlockedWebsites");
+                    result = CreateDefaultBlockedWebsites();
+                    SaveBlockedWebsites(result); // Save the default websites
+                }
+                
                 LoggingService.Instance.LogInfo($"Successfully loaded {result.Count} blocked websites", "ConfigurationManager.LoadBlockedWebsites");
                 return result;
             }

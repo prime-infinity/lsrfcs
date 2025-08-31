@@ -29,7 +29,7 @@ namespace LaserFocus
         private ObservableCollection<ProcessInfo> _runningProcesses;
         
         // Default allowed processes (will be configurable in future tasks)
-        private readonly string[] _allowedProcesses = { "chrome", "code", "kiro", "devenv", "notepad" };
+        private readonly string[] _allowedProcesses = { "chrome", "code", "kiro", "devenv", "notepad", "LaserFocus" };
 
         public MainWindow()
         {
@@ -476,13 +476,50 @@ namespace LaserFocus
                 // Clear current collection
                 BlockedWebsites.Clear();
                 
-                // Add websites from configuration
+                // Add websites from configuration and sync with hosts file if admin privileges available
+                bool hasAdminPrivileges = App.HasAdministratorPrivileges();
+                int syncedCount = 0;
+                int failedCount = 0;
+                
                 foreach (var website in configWebsites)
                 {
                     BlockedWebsites.Add(website);
+                    
+                    // Try to sync with hosts file if we have admin privileges
+                    if (hasAdminPrivileges)
+                    {
+                        try
+                        {
+                            // Check if website is already blocked in hosts file
+                            if (!_hostsFileManager.IsWebsiteBlocked(website))
+                            {
+                                _hostsFileManager.BlockWebsite(website);
+                                syncedCount++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LoggingService.Instance.LogException(ex, "MainWindow.LoadBlockedWebsitesFromConfig", $"Failed to sync website {website} with hosts file");
+                            failedCount++;
+                        }
+                    }
                 }
                 
-                UpdateStatus($"Loaded {BlockedWebsites.Count} blocked websites from configuration.");
+                string statusMessage = $"Loaded {BlockedWebsites.Count} blocked websites from configuration.";
+                if (hasAdminPrivileges)
+                {
+                    statusMessage += $" Synced {syncedCount} websites with hosts file.";
+                    if (failedCount > 0)
+                    {
+                        statusMessage += $" {failedCount} websites failed to sync.";
+                    }
+                }
+                else
+                {
+                    statusMessage += " Website blocking requires administrator privileges.";
+                }
+                
+                UpdateStatus(statusMessage);
             }
             catch (Exception ex)
             {

@@ -12,6 +12,9 @@
       }
     ],
     "configProperties": {
+      "System.GC.Server": true,
+      "System.GC.Concurrent": true,
+      "System.GC.RetainVM": true,
       "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
       "CSWINRT_USE_WINDOWS_UI_XAML_PROJECTIONS": false
     }

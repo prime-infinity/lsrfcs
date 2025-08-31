@@ -18,29 +18,56 @@ A Windows desktop application designed to help developers maintain focus by prov
 
 ## How to Run
 
-### Option 1: Using the Batch File (Recommended)
+### Option 1: Using the Latest Version Script (Recommended)
+
+**For the most up-to-date version with all your latest changes:**
+
+1. Right-click on `run-latest.bat`
+2. Select "Run as administrator"
+3. Click "Yes" when prompted by Windows UAC
+
+This script automatically cleans and rebuilds to ensure you're running the latest code.
+
+### Option 2: Using the Standard Batch File
 
 1. Right-click on `run-laserfocus.bat`
 2. Select "Run as administrator"
 3. Click "Yes" when prompted by Windows UAC
 
-### Option 2: Using PowerShell
+### Option 3: Using PowerShell
 
 1. Right-click on PowerShell and select "Run as administrator"
 2. Navigate to the project directory
-3. Run: `.\run-laserfocus.ps1`
+3. Run: `.\run-latest.ps1` (for latest version) or `.\run-laserfocus.ps1`
 
-### Option 3: Using .NET CLI
+### Option 4: Using .NET CLI
 
 1. Open Command Prompt or PowerShell as administrator
 2. Navigate to the project directory
-3. Run: `dotnet run --project src/LaserFocus/LaserFocus.csproj`
+3. Run: `dotnet run --project src/LaserFocus/LaserFocus.csproj --configuration Debug`
 
-### Option 4: Running the Executable Directly
+### Option 5: Running the Executable Directly
 
-1. Navigate to `src\LaserFocus\bin\Release\net9.0-windows\`
+**Note:** Direct executable runs may not reflect your latest code changes. Use the scripts above for development.
+
+1. Navigate to `src\LaserFocus\bin\Debug\net9.0-windows\` (for latest changes)
 2. Right-click on `LaserFocus.exe`
 3. Select "Run as administrator"
+
+## Development Workflow
+
+### Ensuring Latest Version
+
+If you're experiencing issues with old versions running:
+
+1. Run `clean-all-builds.bat` to remove all build outputs
+2. Use `run-latest.bat` to ensure you're running the most recent code
+
+### Build Management
+
+- **Development**: Use Debug configuration for active development
+- **Release**: Use `deploy-release.bat` or `deploy-release.ps1` for final builds
+- **Clean**: Use `clean-all-builds.bat` to remove all build artifacts
 
 ## Usage
 

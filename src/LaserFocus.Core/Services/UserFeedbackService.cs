@@ -72,23 +72,23 @@ namespace LaserFocus.Core.Services
         {
             return exception switch
             {
-                UnauthorizedAccessException => "Access denied. Administrator privileges are required for this operation. Please restart the application as administrator.",
+                System.UnauthorizedAccessException => "Access denied. Administrator privileges are required for this operation. Please restart the application as administrator.",
                 
-                FileNotFoundException => "A required file could not be found. The application may need to be reinstalled or configuration files may be missing.",
+                System.IO.FileNotFoundException => "A required file could not be found. The application may need to be reinstalled or configuration files may be missing.",
                 
-                DirectoryNotFoundException => "A required directory could not be found. Please check that the application is properly installed.",
+                System.IO.DirectoryNotFoundException => "A required directory could not be found. Please check that the application is properly installed.",
                 
-                IOException => "A file operation failed. The file may be in use by another program or the disk may be full.",
+                System.IO.IOException => "A file operation failed. The file may be in use by another program or the disk may be full.",
                 
-                ArgumentException => "Invalid input provided. Please check your input and try again.",
+                System.ArgumentException => "Invalid input provided. Please check your input and try again.",
                 
-                InvalidOperationException => "The requested operation cannot be performed at this time. Please try again later.",
+                System.InvalidOperationException => "The requested operation cannot be performed at this time. Please try again later.",
                 
                 System.Security.SecurityException => "Security restrictions prevent this operation. Administrator privileges may be required.",
                 
-                TimeoutException => "The operation timed out. Please check your system resources and try again.",
+                System.TimeoutException => "The operation timed out. Please check your system resources and try again.",
                 
-                OutOfMemoryException => "The system is running low on memory. Please close other applications and try again.",
+                System.OutOfMemoryException => "The system is running low on memory. Please close other applications and try again.",
                 
                 _ => "An unexpected error occurred. Please check the application logs for more details."
             };

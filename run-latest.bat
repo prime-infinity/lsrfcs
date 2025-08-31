@@ -1,10 +1,11 @@
 @echo off
-echo Starting LaserFocus Productivity App...
+echo Starting LaserFocus (Latest Version)...
 echo.
 echo Note: This application requires administrator privileges to function properly.
 echo If prompted by Windows UAC, please click "Yes" to allow the application to run.
 echo.
-pause
+
+REM Change to script directory
 cd /d "%~dp0"
 
 REM Clean and rebuild to ensure latest version
@@ -15,4 +16,6 @@ dotnet build --configuration Debug --verbosity quiet
 REM Run the application
 echo Starting application...
 dotnet run --project src/LaserFocus/LaserFocus.csproj --configuration Debug
+
+echo.
 pause

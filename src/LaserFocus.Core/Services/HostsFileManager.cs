@@ -38,7 +38,12 @@ namespace LaserFocus.Core.Services
             
             try
             {
-                ValidateAdminPrivileges();
+                // Check admin privileges but don't throw immediately
+                if (!HasAdministratorPrivileges())
+                {
+                    LoggingService.Instance.LogWarning("Attempting to block website without administrator privileges", "HostsFileManager.BlockWebsite");
+                    throw new UnauthorizedAccessException("Administrator privileges are required to modify the hosts file.");
+                }
                 
                 // Validate and format the website URL
                 var validationResult = InputValidationService.ValidateWebsiteUrl(website);
@@ -104,7 +109,12 @@ namespace LaserFocus.Core.Services
             
             try
             {
-                ValidateAdminPrivileges();
+                // Check admin privileges but don't throw immediately
+                if (!HasAdministratorPrivileges())
+                {
+                    LoggingService.Instance.LogWarning("Attempting to unblock website without administrator privileges", "HostsFileManager.UnblockWebsite");
+                    throw new UnauthorizedAccessException("Administrator privileges are required to modify the hosts file.");
+                }
                 
                 // Validate and format the website URL
                 var validationResult = InputValidationService.ValidateWebsiteUrl(website);
@@ -262,7 +272,11 @@ namespace LaserFocus.Core.Services
         /// <exception cref="UnauthorizedAccessException">Thrown when administrator privileges are required</exception>
         public void RestoreFromBackup()
         {
-            ValidateAdminPrivileges();
+            // Check admin privileges but don't throw immediately
+            if (!HasAdministratorPrivileges())
+            {
+                throw new UnauthorizedAccessException("Administrator privileges are required to restore the hosts file.");
+            }
             
             if (!File.Exists(_backupFilePath))
             {
@@ -301,17 +315,7 @@ namespace LaserFocus.Core.Services
             }
         }
 
-        /// <summary>
-        /// Validates that the current user has administrator privileges
-        /// </summary>
-        /// <exception cref="UnauthorizedAccessException">Thrown when administrator privileges are required</exception>
-        private void ValidateAdminPrivileges()
-        {
-            if (!HasAdministratorPrivileges())
-            {
-                throw new UnauthorizedAccessException("Administrator privileges are required to modify the hosts file.");
-            }
-        }
+
 
         /// <summary>
         /// Formats and validates a website URL
