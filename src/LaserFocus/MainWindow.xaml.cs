@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Threading;
 using LaserFocus.Core.Models;
 using LaserFocus.Core.Services;
@@ -12,6 +15,30 @@ using LaserFocus.Services;
 
 namespace LaserFocus
 {
+    /// <summary>
+    /// Converter that inverts boolean values for visibility binding
+    /// </summary>
+    public class InverseBooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? Visibility.Collapsed : Visibility.Visible;
+            }
+            return Visibility.Visible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Visibility visibility)
+            {
+                return visibility == Visibility.Collapsed;
+            }
+            return false;
+        }
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -43,6 +70,7 @@ namespace LaserFocus
             
             // Initialize collections
             _blockedWebsites = new ObservableCollection<string>();
+            _blockedWebsites.CollectionChanged += BlockedWebsites_CollectionChanged;
             _runningProcesses = new ObservableCollection<ProcessInfo>();
             
             // Initialize timer for process monitoring
@@ -69,8 +97,20 @@ namespace LaserFocus
             get => _blockedWebsites;
             set
             {
+                if (_blockedWebsites != null)
+                {
+                    _blockedWebsites.CollectionChanged -= BlockedWebsites_CollectionChanged;
+                }
+                
                 _blockedWebsites = value;
+                
+                if (_blockedWebsites != null)
+                {
+                    _blockedWebsites.CollectionChanged += BlockedWebsites_CollectionChanged;
+                }
+                
                 OnPropertyChanged(nameof(BlockedWebsites));
+                OnPropertyChanged(nameof(WebsiteListDisplayText));
             }
         }
 
@@ -100,6 +140,36 @@ namespace LaserFocus
                 UpdateUIState();
             }
         }
+
+        // Website visibility toggle properties
+        private bool _isWebsiteListVisible = false;
+
+        /// <summary>
+        /// Controls whether the blocked websites list is visible or hidden for privacy
+        /// </summary>
+        public bool IsWebsiteListVisible
+        {
+            get => _isWebsiteListVisible;
+            set
+            {
+                _isWebsiteListVisible = value;
+                OnPropertyChanged(nameof(IsWebsiteListVisible));
+                OnPropertyChanged(nameof(WebsiteToggleButtonText));
+                OnPropertyChanged(nameof(WebsiteListDisplayText));
+            }
+        }
+
+        /// <summary>
+        /// Dynamic text for the website visibility toggle button
+        /// </summary>
+        public string WebsiteToggleButtonText =>
+            IsWebsiteListVisible ? "Hide Blocked Websites" : "Show Blocked Websites";
+
+        /// <summary>
+        /// Display text shown when website list is hidden
+        /// </summary>
+        public string WebsiteListDisplayText =>
+            IsWebsiteListVisible ? "" : $"{BlockedWebsites?.Count ?? 0} websites blocked (hidden for privacy)";
 
         #endregion
 
@@ -378,6 +448,46 @@ namespace LaserFocus
             
             // Update process list and terminate blocked applications
             UpdateProcessList();
+        }
+
+        /// <summary>
+        /// Handles toggling the visibility of the blocked websites list
+        /// </summary>
+        private void ToggleWebsiteVisibilityButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoggingService.Instance.LogInfo($"User toggling website visibility from {IsWebsiteListVisible} to {!IsWebsiteListVisible}", "MainWindow.ToggleWebsiteVisibilityButton_Click");
+            
+            try
+            {
+                IsWebsiteListVisible = !IsWebsiteListVisible;
+                
+                string statusMessage = IsWebsiteListVisible 
+                    ? "Blocked websites are now visible." 
+                    : "Blocked websites are now hidden for privacy.";
+                
+                UpdateStatus(statusMessage);
+                
+                LoggingService.Instance.LogInfo($"Website visibility toggled successfully. New state: {IsWebsiteListVisible}", "MainWindow.ToggleWebsiteVisibilityButton_Click");
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.LogException(ex, "MainWindow.ToggleWebsiteVisibilityButton_Click", "Error toggling website visibility");
+                
+                var friendlyMessage = _userFeedbackService.GetFriendlyErrorMessage(ex);
+                UpdateStatus($"Error toggling website visibility: {friendlyMessage}");
+                _userFeedbackService.ShowError(
+                    "An error occurred while toggling website visibility.",
+                    "Toggle Error",
+                    ex);
+            }
+        }
+
+        /// <summary>
+        /// Handles changes to the blocked websites collection to update display text
+        /// </summary>
+        private void BlockedWebsites_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(WebsiteListDisplayText));
         }
 
         #endregion

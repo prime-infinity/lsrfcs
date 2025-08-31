@@ -1,103 +1,218 @@
 <Window x:Class="LaserFocus.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:LaserFocus"
         Title="Laser Focus - Productivity App" Height="700" Width="900"
         WindowStartupLocation="CenterScreen"
-        MinHeight="600" MinWidth="800">
-    <Grid Margin="20">
+        MinHeight="600" MinWidth="800"
+        Background="{StaticResource BackgroundBrush}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/AppStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Value Converters -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            
+            <!-- Inverse Boolean to Visibility Converter -->
+            <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <!-- Header -->
-        <TextBlock Grid.Row="0" Text="Laser Focus - Productivity App" 
-                   HorizontalAlignment="Center" 
-                   FontSize="28" FontWeight="Bold"
-                   Margin="0,0,0,20"/>
+        <!-- Enhanced Header Section -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Laser Focus" 
+                               Style="{StaticResource HeaderTextStyle}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Productivity App - Stay focused and eliminate distractions" 
+                               Style="{StaticResource HelpTextStyle}"
+                               Margin="0"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border x:Name="PrivilegeStatusIndicator" 
+                            Background="{StaticResource WarningBrush}"
+                            CornerRadius="12" 
+                            Padding="12,4"
+                            Margin="8,0,0,0">
+                        <TextBlock x:Name="PrivilegeStatusText" 
+                                   Text="Limited Mode" 
+                                   Foreground="White" 
+                                   FontSize="12" 
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
         
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="16"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <!-- Website Blocking Section -->
-            <GroupBox Grid.Column="0" Header="Website Blocking" Padding="15">
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                 <StackPanel>
+                    <!-- Section Header -->
+                    <TextBlock Text="Website Blocking" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBlock Text="Block distracting websites system-wide across all browsers" 
+                               Style="{StaticResource HelpTextStyle}"
+                               Margin="0,0,0,16"/>
+                    
                     <!-- Add Website Controls -->
-                    <TextBlock Text="Block Website:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,15">
+                    <TextBlock Text="Block Website:" 
+                               Style="{StaticResource BodyTextStyle}" 
+                               Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="8"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="WebsiteUrlTextBox" Grid.Column="0" 
-                                 Padding="8" FontSize="14"
-                                 VerticalContentAlignment="Center"/>
+                                 Padding="12,8" FontSize="14"
+                                 VerticalContentAlignment="Center"
+                                 BorderBrush="{StaticResource BorderBrush}"
+                                 BorderThickness="1"/>
                         <Button x:Name="AddWebsiteButton" Grid.Column="2" 
                                 Content="Block Website" 
-                                Padding="15,8" FontSize="14"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Click="AddWebsiteButton_Click"/>
                     </Grid>
                     
-                    <!-- Blocked Websites List -->
-                    <TextBlock Text="Blocked Websites:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <Border BorderBrush="Gray" BorderThickness="1" Height="200">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl x:Name="BlockedWebsitesList" 
-                                          ItemsSource="{Binding BlockedWebsites}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="5">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding}" 
-                                                       VerticalAlignment="Center" 
-                                                       Margin="5,0"/>
-                                            <Button Grid.Column="1" Content="Remove" 
-                                                    Padding="8,4" FontSize="12"
-                                                    Click="RemoveWebsiteButton_Click"
-                                                    Tag="{Binding}"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Border>
-                </StackPanel>
-            </GroupBox>
-            
-            <!-- Process Monitoring Section -->
-            <GroupBox Grid.Column="2" Header="Process Monitoring" Padding="15">
-                <StackPanel>
-                    <!-- Monitoring Controls -->
-                    <Grid Margin="0,0,0,15">
+                    <!-- Website Visibility Toggle -->
+                    <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Blocked Websites:" 
+                                   Style="{StaticResource BodyTextStyle}" 
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" 
+                                x:Name="ToggleWebsiteVisibilityButton"
+                                Content="{Binding WebsiteToggleButtonText}" 
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="12,6" FontSize="12"
+                                Click="ToggleWebsiteVisibilityButton_Click"/>
+                    </Grid>
+                    
+                    <!-- Blocked Websites List Container -->
+                    <Border BorderBrush="{StaticResource BorderBrush}" 
+                            BorderThickness="1" 
+                            Height="200"
+                            CornerRadius="4"
+                            Background="{StaticResource SurfaceBrush}">
+                        <Grid>
+                            <!-- Visible Website List -->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8"
+                                          Visibility="{Binding IsWebsiteListVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ItemsControl x:Name="BlockedWebsitesList" 
+                                              ItemsSource="{Binding BlockedWebsites}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource DividerBrush}"
+                                                    CornerRadius="4"
+                                                    Margin="0,2"
+                                                    Padding="12,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="8"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding}" 
+                                                               VerticalAlignment="Center" 
+                                                               Style="{StaticResource BodyTextStyle}"
+                                                               Margin="0"/>
+                                                    <Button Grid.Column="2" Content="Remove" 
+                                                            Style="{StaticResource DangerButtonStyle}"
+                                                            Padding="8,4" FontSize="12"
+                                                            Click="RemoveWebsiteButton_Click"
+                                                            Tag="{Binding}"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            
+                            <!-- Hidden Website List Display -->
+                            <Grid Visibility="{Binding IsWebsiteListVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="🔒" 
+                                               FontSize="32" 
+                                               HorizontalAlignment="Center" 
+                                               Margin="0,0,0,8"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding WebsiteListDisplayText}" 
+                                               Style="{StaticResource BodyTextStyle}"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+            
+            <!-- Process Monitoring Section -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <!-- Section Header -->
+                    <TextBlock Text="Process Monitoring" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBlock Text="Automatically close non-essential applications while preserving development tools" 
+                               Style="{StaticResource HelpTextStyle}"
+                               Margin="0,0,0,16"/>
+                    
+                    <!-- Monitoring Controls -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button x:Name="StartButton" Grid.Column="0" 
                                 Content="Start Monitoring" 
-                                Padding="15,10" FontSize="14"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Click="StartButton_Click"/>
                         <Button x:Name="StopButton" Grid.Column="2" 
                                 Content="Stop Monitoring" 
-                                Padding="15,10" FontSize="14"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 Click="StopButton_Click"
                                 IsEnabled="False"/>
                     </Grid>
                     
                     <!-- Running Processes List -->
-                    <TextBlock Text="Running Processes:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <Border BorderBrush="Gray" BorderThickness="1" Height="200">
+                    <TextBlock Text="Running Processes:" 
+                               Style="{StaticResource BodyTextStyle}" 
+                               Margin="0,0,0,8"/>
+                    <Border BorderBrush="{StaticResource BorderBrush}" 
+                            BorderThickness="1" 
+                            Height="200"
+                            CornerRadius="4"
+                            Background="{StaticResource SurfaceBrush}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <DataGrid x:Name="ProcessesDataGrid" 
                                       ItemsSource="{Binding RunningProcesses}"
@@ -106,21 +221,52 @@
                                       GridLinesVisibility="Horizontal"
                                       HeadersVisibility="Column"
                                       CanUserResizeColumns="True"
-                                      CanUserSortColumns="False">
+                                      CanUserSortColumns="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      AlternatingRowBackground="{StaticResource DividerBrush}"
+                                      RowBackground="Transparent">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="12,8"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="12,8"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Background="{TemplateBinding Background}" 
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </DataGrid.CellStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Process" 
+                                    <DataGridTextColumn Header="Process Name" 
                                                         Binding="{Binding ProcessName}" 
                                                         Width="*"/>
-                                    <DataGridTextColumn Header="ID" 
+                                    <DataGridTextColumn Header="Process ID" 
                                                         Binding="{Binding Id}" 
-                                                        Width="60"/>
+                                                        Width="80"/>
                                     <DataGridTextColumn Header="Status" 
                                                         Binding="{Binding Status}" 
-                                                        Width="80">
+                                                        Width="100">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{Binding StatusColor}"/>
                                                 <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="HorizontalAlignment" Value="Center"/>
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
@@ -129,14 +275,34 @@
                         </ScrollViewer>
                     </Border>
                 </StackPanel>
-            </GroupBox>
+            </Border>
         </Grid>
         
-        <!-- Status Bar -->
-        <StatusBar Grid.Row="2" Height="30" Margin="0,20,0,0">
-            <StatusBarItem>
-                <TextBlock x:Name="StatusTextBlock" Text="Ready" FontSize="12"/>
-            </StatusBarItem>
-        </StatusBar>
+        <!-- Enhanced Status Bar -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock x:Name="StatusTextBlock" 
+                           Grid.Column="0"
+                           Text="Ready - Application initialized successfully" 
+                           Style="{StaticResource CaptionTextStyle}"
+                           VerticalAlignment="Center"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Status: " 
+                               Style="{StaticResource CaptionTextStyle}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0"/>
+                    <Ellipse x:Name="StatusIndicator" 
+                             Width="8" Height="8" 
+                             Fill="{StaticResource SuccessBrush}"
+                             VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
