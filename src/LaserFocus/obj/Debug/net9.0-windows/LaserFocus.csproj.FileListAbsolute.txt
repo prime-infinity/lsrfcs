@@ -6,12 +6,14 @@ C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.Core.dll
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.Core.pdb
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.csproj.AssemblyReference.cache
-C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\MainWindow.baml
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\Styles\AppStyles.baml
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\App.baml
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\MainWindow.g.cs
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\App.g.cs
+C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\GeneratedInternalTypeHelper.g.cs
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus_MarkupCompile.cache
+C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus_MarkupCompile.lref
+C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\MainWindow.baml
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.g.resources
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.AssemblyInfoInputs.cache
@@ -24,5 +26,3 @@ C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\refint\Lase
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.pdb
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus.genruntimeconfig.cache
 C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\ref\LaserFocus.dll
-C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\GeneratedInternalTypeHelper.g.cs
-C:\Users\HP\Documents\lsrfcs\src\LaserFocus\obj\Debug\net9.0-windows\LaserFocus_MarkupCompile.lref
