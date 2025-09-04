@@ -14,9 +14,17 @@ try {
     dotnet clean --configuration Debug --verbosity quiet
     dotnet build --configuration Debug --verbosity quiet
     
+    # Check if executable exists
+    $exePath = "src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.exe"
+    if (-not (Test-Path $exePath)) {
+        Write-Host "Error: LaserFocus.exe not found. Build may have failed." -ForegroundColor Red
+        Write-Host "Please check the build output above for errors." -ForegroundColor Yellow
+        throw "Executable not found at: $exePath"
+    }
+    
     # Run the application
     Write-Host "Starting application..." -ForegroundColor Cyan
-    dotnet run --project src/LaserFocus/LaserFocus.csproj --configuration Debug
+    & $exePath
     
 } catch {
     Write-Host "Error running application: $_" -ForegroundColor Red

@@ -12,7 +12,15 @@ echo Cleaning and rebuilding to ensure latest version...
 dotnet clean --configuration Debug --verbosity quiet
 dotnet build --configuration Debug --verbosity quiet
 
+REM Check if executable exists
+if not exist "src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.exe" (
+    echo Error: LaserFocus.exe not found. Build may have failed.
+    echo Please check the build output above for errors.
+    pause
+    exit /b 1
+)
+
 REM Run the application
 echo Starting application...
-dotnet run --project src/LaserFocus/LaserFocus.csproj --configuration Debug
+src\LaserFocus\bin\Debug\net9.0-windows\LaserFocus.exe
 pause
